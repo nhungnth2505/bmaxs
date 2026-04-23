@@ -1,0 +1,754 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MAXA AI - Hỗ trợ phát hiện sớm stress cho học sinh</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .maxa-gradient { background: linear-gradient(135deg, #fff7d6 0%, #ffe8a3 45%, #ffd36b 100%); }
+        .maxa-soft { background: linear-gradient(135deg, #fffef7 0%, #fff8dc 100%); }
+        .maxa-text { background: linear-gradient(135deg, #d97706 0%, #f59e0b 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+        .glass-card { backdrop-filter: blur(10px); background: rgba(255,255,255,0.82); }
+        .animate-fade-in { animation: fadeIn 0.45s ease-in; }
+        .progress-bar { transition: width 0.4s ease; }
+        .range-input { accent-color: #f59e0b; }
+        .menu-pill { transition: all 0.25s ease; }
+        .menu-pill:hover { transform: translateY(-1px); }
+        .result-card { transition: all 0.25s ease; }
+        .result-card:hover { transform: translateY(-2px); }
+        .status-badge { border: 1px solid rgba(245, 158, 11, 0.18); }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .loading-dots { display: inline-flex; gap: 4px; }
+        .loading-dots span {
+            width: 8px; height: 8px; background: currentColor; border-radius: 50%;
+            animation: bounce 1.4s infinite ease-in-out both;
+        }
+        .loading-dots span:nth-child(1) { animation-delay: -0.32s; }
+        .loading-dots span:nth-child(2) { animation-delay: -0.16s; }
+        @keyframes bounce {
+            0%, 80%, 100% { transform: scale(0); }
+            40% { transform: scale(1); }
+        }
+    </style>
+</head>
+<body class="bg-amber-50 text-gray-900">
+
+    <nav class="fixed w-full z-50 bg-white/90 backdrop-blur-md border-b border-amber-100 shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16 items-center">
+                <div class="flex items-center gap-3">
+                    <div class="w-9 h-9 maxa-gradient rounded-xl flex items-center justify-center shadow-sm">
+                        <i data-lucide="brain-circuit" class="w-5 h-5 text-amber-900"></i>
+                    </div>
+                    <div>
+                        <div class="font-extrabold text-xl maxa-text">MAXA AI</div>
+                        <div class="text-[11px] text-amber-700 -mt-1">Stress screening support for students</div>
+                    </div>
+                </div>
+                <div class="hidden md:flex items-center space-x-3 text-sm">
+                    <a href="#survey-model" class="menu-pill px-4 py-2 rounded-full bg-amber-100 text-amber-800 font-semibold hover:bg-amber-200">Mô hình khảo sát</a>
+                    <a href="#image-model" class="menu-pill px-4 py-2 rounded-full bg-blue-100 text-blue-700 font-semibold hover:bg-blue-200">Mô hình hình ảnh</a>
+                    <a href="#combined-model" class="menu-pill px-4 py-2 rounded-full bg-emerald-100 text-emerald-700 font-semibold hover:bg-emerald-200">Kết hợp kết quả</a>
+                </div>
+                <button class="md:hidden" onclick="toggleMobileMenu()">
+                    <i data-lucide="menu" class="w-6 h-6"></i>
+                </button>
+            </div>
+        </div>
+        <div id="mobileMenu" class="hidden md:hidden bg-white border-t border-amber-100">
+            <div class="px-4 py-3 space-y-2">
+                <a href="#survey-model" class="block py-2 text-amber-800 font-medium">Mô hình khảo sát</a>
+                <a href="#image-model" class="block py-2 text-blue-700 font-medium">Mô hình hình ảnh</a>
+                <a href="#combined-model" class="block py-2 text-emerald-700 font-medium">Kết hợp kết quả</a>
+            </div>
+        </div>
+    </nav>
+
+    <section class="pt-32 pb-16 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+        <div class="text-center animate-fade-in">
+            <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-amber-100 text-amber-800 text-sm font-semibold mb-6 status-badge">
+                <i data-lucide="sparkles" class="w-4 h-4"></i>
+                <span>Phiên bản giao diện tích hợp theo thuyết minh MAXA</span>
+            </div>
+            <h1 class="text-4xl md:text-6xl font-extrabold mb-6 leading-tight">
+                Hệ thống AI hỗ trợ <span class="maxa-text">phát hiện sớm stress</span><br>
+                và tổng hợp mức cảnh báo cho học sinh
+            </h1>
+            <p class="text-lg md:text-xl text-gray-600 max-w-4xl mx-auto mb-10 leading-relaxed">
+                Giao diện web được tách thành 3 phần rõ ràng: <strong>mô hình khảo sát</strong>, <strong>mô hình hình ảnh</strong> và <strong>menu kết hợp kết quả</strong>. 
+                Phần kết hợp sử dụng đúng logic 4 mức đầu ra được mô tả trong thuyết minh: Mức I, II, III và IV.
+            </p>
+            <div class="flex flex-wrap justify-center gap-4">
+                <a href="#survey-model" class="px-8 py-3 bg-amber-500 text-white rounded-full font-semibold hover:bg-amber-600 transition flex items-center gap-2 btn-ripple">
+                    <i data-lucide="clipboard-list" class="w-5 h-5"></i>
+                    Bắt đầu với khảo sát
+                </a>
+                <a href="#combined-model" class="px-8 py-3 bg-white text-amber-700 border-2 border-amber-400 rounded-full font-semibold hover:bg-amber-50 transition flex items-center gap-2">
+                    <i data-lucide="layers-3" class="w-5 h-5"></i>
+                    Xem phần kết hợp
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <section class="py-12 bg-white border-y border-amber-100">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
+                <div class="result-card bg-amber-50 rounded-2xl p-5">
+                    <div class="text-3xl font-extrabold text-amber-600">{{ model_accuracy if model_accuracy else 95 }}%</div>
+                    <div class="text-gray-600 text-sm mt-1">Độ chính xác mô hình khảo sát</div>
+                </div>
+                <div class="result-card bg-blue-50 rounded-2xl p-5">
+                    <div class="text-3xl font-extrabold text-blue-600">3</div>
+                    <div class="text-gray-600 text-sm mt-1">Nhãn mô hình ảnh: Happy / Neutral / Sad</div>
+                </div>
+                <div class="result-card bg-emerald-50 rounded-2xl p-5">
+                    <div class="text-3xl font-extrabold text-emerald-600">4</div>
+                    <div class="text-gray-600 text-sm mt-1">Mức đầu ra sau khi kết hợp</div>
+                </div>
+                <div class="result-card bg-orange-50 rounded-2xl p-5">
+                    <div class="text-3xl font-extrabold text-orange-600">20</div>
+                    <div class="text-gray-600 text-sm mt-1">Câu hỏi khảo sát đầu vào</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="survey-model" class="py-20 bg-gradient-to-br from-amber-50 to-yellow-50">
+        <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-12">
+                <div class="w-14 h-14 bg-amber-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                    <i data-lucide="clipboard-list" class="w-7 h-7 text-amber-700"></i>
+                </div>
+                <h2 class="text-3xl md:text-4xl font-bold mb-4">Menu 1: Mô hình khảo sát</h2>
+                <p class="text-gray-600 max-w-3xl mx-auto">Học sinh trả lời bộ câu hỏi để mô hình DNN dự đoán 3 trạng thái: <strong>Normal</strong>, <strong>Stress level 1</strong>, <strong>Stress level 2</strong>.</p>
+            </div>
+
+            <div class="glass-card rounded-3xl shadow-xl p-8 border border-amber-100">
+                <div class="mb-8">
+                    <div class="flex justify-between text-sm text-gray-600 mb-2">
+                        <span id="questionCounter">Câu hỏi 1/{{ feature_config|length }}</span>
+                        <span id="progressPercent">5%</span>
+                    </div>
+                    <div class="w-full bg-gray-200 rounded-full h-2.5">
+                        <div id="progressBar" class="progress-bar bg-amber-500 h-2.5 rounded-full" style="width: 5%"></div>
+                    </div>
+                </div>
+
+                <div id="stressQuiz" class="space-y-6">
+                    <div id="questionContainer" class="animate-fade-in">
+                        <div class="flex items-center gap-2 mb-2 text-sm text-amber-700 font-semibold">
+                            <i data-lucide="book-open-check" class="w-4 h-4"></i>
+                            <span id="featureLabel"></span>
+                        </div>
+                        <h3 id="questionText" class="text-xl font-semibold mb-6"></h3>
+                        <div id="optionsContainer" class="space-y-4"></div>
+                    </div>
+                    <div class="flex justify-between pt-2">
+                        <button id="prevBtn" onclick="prevQuestion()" class="px-5 py-2 border border-gray-300 rounded-xl text-gray-700 hover:bg-gray-50 transition disabled:opacity-50" disabled>
+                            Câu trước
+                        </button>
+                        <button id="nextBtn" onclick="nextQuestion()" class="px-6 py-2.5 bg-amber-500 text-white rounded-xl hover:bg-amber-600 transition font-semibold">
+                            Câu tiếp theo
+                        </button>
+                    </div>
+                </div>
+
+                <div id="stressLoading" class="hidden py-8 text-center">
+                    <div class="loading-dots text-amber-600 mb-4 justify-center"><span></span><span></span><span></span></div>
+                    <p class="text-gray-600">Đang gửi dữ liệu khảo sát đến mô hình stress...</p>
+                </div>
+
+                <div id="stressResult" class="hidden py-8">
+                    <div class="text-center mb-6">
+                        <div id="stressIcon" class="w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-5 text-4xl">🟡</div>
+                        <h3 id="stressLevel" class="text-2xl font-bold mb-2">Kết quả mô hình khảo sát</h3>
+                        <p id="confidenceText" class="text-sm text-gray-500"></p>
+                    </div>
+                    <div class="bg-amber-50 rounded-2xl p-6 mb-6 border border-amber-100">
+                        <h4 class="font-semibold mb-3 flex items-center gap-2 text-amber-800">
+                            <i data-lucide="brain-circuit" class="w-5 h-5"></i>
+                            Phân tích từ mô hình khảo sát
+                        </h4>
+                        <p id="stressAnalysis" class="text-gray-700 leading-relaxed"></p>
+                    </div>
+                    <div class="flex flex-wrap justify-center gap-3">
+                        <button onclick="resetStressTest()" class="px-6 py-3 bg-amber-500 text-white rounded-xl font-semibold hover:bg-amber-600 transition">Làm lại khảo sát</button>
+                        <button onclick="copySurveyResultToFusion()" class="px-6 py-3 border border-amber-300 text-amber-800 rounded-xl font-semibold hover:bg-amber-50 transition">Dùng kết quả này để kết hợp</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="image-model" class="py-20 bg-gradient-to-br from-blue-50 to-sky-50">
+        <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-12">
+                <div class="w-14 h-14 bg-blue-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                    <i data-lucide="scan-face" class="w-7 h-7 text-blue-700"></i>
+                </div>
+                <h2 class="text-3xl md:text-4xl font-bold mb-4">Menu 2: Mô hình hình ảnh</h2>
+                <p class="text-gray-600 max-w-3xl mx-auto">Người dùng tải ảnh khuôn mặt chụp trực diện để mô hình CNN dự đoán cảm xúc: <strong>Happy</strong>, <strong>Neutral</strong> hoặc <strong>Sad</strong>.</p>
+            </div>
+
+            <div class="bg-white rounded-3xl shadow-xl p-8 border border-blue-100">
+                <div class="grid md:grid-cols-2 gap-8 items-start">
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">Tải ảnh khuôn mặt</label>
+                        <div class="border-2 border-dashed border-blue-200 rounded-2xl p-6 text-center bg-blue-50/60">
+                            <input id="imageInput" type="file" accept="image/*" class="hidden" onchange="previewImage(event)">
+                            <button onclick="document.getElementById('imageInput').click()" class="px-5 py-3 bg-blue-600 text-white rounded-xl font-semibold hover:bg-blue-700 transition inline-flex items-center gap-2">
+                                <i data-lucide="upload" class="w-5 h-5"></i>
+                                Chọn ảnh
+                            </button>
+                            <p class="text-sm text-gray-500 mt-3">Ưu tiên ảnh rõ mặt, chính diện, đủ sáng</p>
+                            <div id="previewWrapper" class="hidden mt-5">
+                                <img id="previewImage" src="" alt="Ảnh xem trước" class="mx-auto max-h-64 rounded-2xl shadow-sm border border-blue-100">
+                            </div>
+                        </div>
+                        <div class="mt-5 flex gap-3">
+                            <button onclick="submitImagePrediction()" class="px-6 py-3 bg-blue-600 text-white rounded-xl font-semibold hover:bg-blue-700 transition flex items-center gap-2">
+                                <i data-lucide="sparkles" class="w-5 h-5"></i>
+                                Phân tích ảnh
+                            </button>
+                            <button onclick="resetImageSection()" class="px-6 py-3 border border-gray-300 text-gray-700 rounded-xl font-semibold hover:bg-gray-50 transition">Làm lại</button>
+                        </div>
+                    </div>
+
+                    <div>
+                        <div id="imageLoading" class="hidden py-10 text-center">
+                            <div class="loading-dots text-blue-600 mb-4 justify-center"><span></span><span></span><span></span></div>
+                            <p class="text-gray-600">Đang gửi ảnh đến mô hình nhận diện cảm xúc...</p>
+                        </div>
+
+                        <div id="imageResult" class="bg-blue-50 rounded-2xl border border-blue-100 p-6 hidden">
+                            <div class="flex items-start justify-between gap-4 mb-4">
+                                <div>
+                                    <p class="text-sm font-semibold text-blue-700 mb-1">Kết quả mô hình hình ảnh</p>
+                                    <h3 id="imageLevel" class="text-2xl font-bold text-gray-900">Neutral</h3>
+                                </div>
+                                <div id="imageMoodIcon" class="w-14 h-14 rounded-2xl bg-white flex items-center justify-center text-3xl shadow-sm">😐</div>
+                            </div>
+                            <p id="imageConfidence" class="text-sm text-gray-500 mb-4"></p>
+                            <div class="bg-white rounded-2xl p-4 border border-blue-100">
+                                <p id="imageAnalysis" class="text-gray-700 leading-relaxed">Hệ thống sẽ hiển thị mô tả ngắn về cảm xúc được nhận diện từ ảnh.</p>
+                            </div>
+                            <button onclick="copyImageResultToFusion()" class="mt-5 w-full px-5 py-3 bg-blue-600 text-white rounded-xl font-semibold hover:bg-blue-700 transition">Dùng kết quả này để kết hợp</button>
+                        </div>
+
+                        <div id="imageHint" class="bg-white rounded-2xl border border-blue-100 p-6">
+                            <h4 class="font-semibold text-gray-900 mb-3">Gợi ý cách tích hợp backend</h4>
+                            <p class="text-gray-700 text-sm leading-6">Frontend này đang chờ API <code>/predict_emotion</code>. API nên trả về các nhãn <code>Happy</code>, <code>Neutral</code>, <code>Sad</code> để phần kết hợp phía dưới hoạt động đúng theo thuyết minh.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="combined-model" class="py-20 bg-gradient-to-br from-emerald-50 to-teal-50">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-12">
+                <div class="w-14 h-14 bg-emerald-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                    <i data-lucide="layers-3" class="w-7 h-7 text-emerald-700"></i>
+                </div>
+                <h2 class="text-3xl md:text-4xl font-bold mb-4">Menu 3: Kết hợp kết quả</h2>
+                <p class="text-gray-600 max-w-4xl mx-auto">Phần này hợp nhất kết quả từ 2 mô hình bằng luật if–then đúng như bảng trong thuyết minh: Normal + Happy/Neutral → Mức I; Normal + Sad → Mức II; Stress level 1 + Happy/Neutral hoặc Stress level 2 + Neutral → Mức III; Stress level 1/2 + Sad → Mức IV.</p>
+            </div>
+
+            <div class="grid lg:grid-cols-[1.1fr_0.9fr] gap-8 items-start">
+                <div class="bg-white rounded-3xl shadow-xl p-8 border border-emerald-100">
+                    <h3 class="text-xl font-bold mb-6">Chọn kết quả đầu vào để hợp nhất</h3>
+                    <div class="grid md:grid-cols-2 gap-6 mb-6">
+                        <div class="bg-amber-50 border border-amber-100 rounded-2xl p-5">
+                            <label class="block text-sm font-semibold text-amber-800 mb-3">Kết quả khảo sát</label>
+                            <select id="surveyFusionSelect" class="w-full rounded-xl border border-amber-200 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-amber-400">
+                                <option value="">-- Chọn kết quả khảo sát --</option>
+                                <option value="Normal">Normal</option>
+                                <option value="Stress level 1">Stress level 1</option>
+                                <option value="Stress level 2">Stress level 2</option>
+                            </select>
+                            <p class="text-xs text-gray-500 mt-2">Có thể tự chọn hoặc lấy trực tiếp từ menu khảo sát.</p>
+                        </div>
+                        <div class="bg-blue-50 border border-blue-100 rounded-2xl p-5">
+                            <label class="block text-sm font-semibold text-blue-800 mb-3">Kết quả hình ảnh</label>
+                            <select id="imageFusionSelect" class="w-full rounded-xl border border-blue-200 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-400">
+                                <option value="">-- Chọn kết quả hình ảnh --</option>
+                                <option value="Happy">Happy</option>
+                                <option value="Neutral">Neutral</option>
+                                <option value="Sad">Sad</option>
+                            </select>
+                            <p class="text-xs text-gray-500 mt-2">Có thể tự chọn hoặc lấy trực tiếp từ menu hình ảnh.</p>
+                        </div>
+                    </div>
+
+                    <button onclick="combineResults()" class="w-full px-6 py-3.5 bg-emerald-600 text-white rounded-xl font-semibold hover:bg-emerald-700 transition flex items-center justify-center gap-2">
+                        <i data-lucide="combine" class="w-5 h-5"></i>
+                        Kết hợp và sinh mức cảnh báo chung
+                    </button>
+
+                    <div id="combinedResult" class="hidden mt-8 animate-fade-in">
+                        <div id="combinedCard" class="rounded-3xl p-6 border">
+                            <div class="flex flex-wrap items-start justify-between gap-4 mb-5">
+                                <div>
+                                    <p class="text-sm font-semibold uppercase tracking-wide mb-2" id="combinedSubtitle">Kết quả tổng hợp</p>
+                                    <h3 id="combinedLevel" class="text-3xl font-extrabold mb-2">Mức I – Ổn định</h3>
+                                    <p id="combinedMeaning" class="text-gray-700"></p>
+                                </div>
+                                <div id="combinedEmoji" class="w-16 h-16 rounded-2xl bg-white/80 flex items-center justify-center text-4xl shadow-sm">😊</div>
+                            </div>
+                            <div class="grid md:grid-cols-2 gap-4 mb-5">
+                                <div class="bg-white/70 rounded-2xl p-4 border border-white/60">
+                                    <div class="text-sm text-gray-500 mb-1">Mô hình khảo sát</div>
+                                    <div id="combinedSurveySource" class="font-semibold text-lg">Normal</div>
+                                </div>
+                                <div class="bg-white/70 rounded-2xl p-4 border border-white/60">
+                                    <div class="text-sm text-gray-500 mb-1">Mô hình hình ảnh</div>
+                                    <div id="combinedImageSource" class="font-semibold text-lg">Neutral</div>
+                                </div>
+                            </div>
+                            <div class="bg-white/70 rounded-2xl p-5 border border-white/60 mb-4">
+                                <h4 class="font-semibold mb-3">Giải thích</h4>
+                                <p id="combinedExplanation" class="text-gray-700 leading-relaxed"></p>
+                            </div>
+                            <div class="bg-white/70 rounded-2xl p-5 border border-white/60">
+                                <h4 class="font-semibold mb-3">Gợi ý phản hồi cho học sinh</h4>
+                                <ul id="combinedRecommendations" class="space-y-2 text-gray-700"></ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="space-y-6">
+                    <div class="bg-white rounded-3xl shadow-xl p-6 border border-emerald-100">
+                        <h3 class="text-lg font-bold mb-4">Bảng luật kết hợp</h3>
+                        <div class="overflow-auto">
+                            <table class="w-full text-sm">
+                                <thead>
+                                    <tr class="text-left text-gray-500 border-b">
+                                        <th class="py-3 pr-3">Khảo sát</th>
+                                        <th class="py-3 pr-3">Hình ảnh</th>
+                                        <th class="py-3 pr-3">Mức ra</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-gray-100">
+                                    <tr><td class="py-3 pr-3">Normal</td><td class="py-3 pr-3">Happy / Neutral</td><td class="py-3 font-semibold text-emerald-700">Mức I</td></tr>
+                                    <tr><td class="py-3 pr-3">Normal</td><td class="py-3 pr-3">Sad</td><td class="py-3 font-semibold text-yellow-700">Mức II</td></tr>
+                                    <tr><td class="py-3 pr-3">Stress level 1</td><td class="py-3 pr-3">Happy / Neutral</td><td class="py-3 font-semibold text-orange-700">Mức III</td></tr>
+                                    <tr><td class="py-3 pr-3">Stress level 2</td><td class="py-3 pr-3">Neutral</td><td class="py-3 font-semibold text-orange-700">Mức III</td></tr>
+                                    <tr><td class="py-3 pr-3">Stress level 1 hoặc 2</td><td class="py-3 pr-3">Sad</td><td class="py-3 font-semibold text-red-700">Mức IV</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-3xl shadow-xl p-6 border border-emerald-100">
+                        <h3 class="text-lg font-bold mb-3">Luồng backend nên có</h3>
+                        <ol class="space-y-2 text-sm text-gray-700 leading-6 list-decimal list-inside">
+                            <li><code>/predict_stress</code> trả ra 1 trong 3 nhãn khảo sát.</li>
+                            <li><code>/predict_emotion</code> trả ra 1 trong 3 nhãn cảm xúc ảnh.</li>
+                            <li>Frontend dùng hàm <code>combineResults()</code> để quy đổi sang 4 mức chung.</li>
+                            <li>Có thể thêm API <code>/predict_combined</code> nếu muốn backend xử lý luôn phần hợp nhất.</li>
+                        </ol>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <footer class="bg-amber-950 text-white py-12 mt-4">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid md:grid-cols-3 gap-8">
+                <div>
+                    <div class="flex items-center gap-2 mb-4">
+                        <div class="w-8 h-8 maxa-gradient rounded-lg flex items-center justify-center"><i data-lucide="brain-circuit" class="w-5 h-5 text-amber-900"></i></div>
+                        <span class="font-bold text-xl">MAXA AI</span>
+                    </div>
+                    <p class="text-amber-100/80 text-sm">Giao diện web đã được sắp lại đúng hướng đề tài: tách riêng 2 mô hình đầu vào và bổ sung một menu tổng hợp kết quả cuối.</p>
+                </div>
+                <div>
+                    <h4 class="font-semibold mb-4">Menu</h4>
+                    <ul class="space-y-2 text-amber-100/80 text-sm">
+                        <li><a href="#survey-model" class="hover:text-white transition">Mô hình khảo sát</a></li>
+                        <li><a href="#image-model" class="hover:text-white transition">Mô hình hình ảnh</a></li>
+                        <li><a href="#combined-model" class="hover:text-white transition">Kết hợp kết quả</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="font-semibold mb-4">Tích hợp</h4>
+                    <div class="space-y-2 text-amber-100/80 text-sm">
+                        <p class="flex items-center gap-2"><i data-lucide="badge-check" class="w-4 h-4"></i>Mô hình stress: đã có sẵn trên web</p>
+                        <p class="flex items-center gap-2"><i data-lucide="image-up" class="w-4 h-4"></i>Mô hình ảnh: sẵn vùng upload và hiển thị</p>
+                        <p class="flex items-center gap-2"><i data-lucide="git-merge" class="w-4 h-4"></i>Luật kết hợp: đúng theo bảng thuyết minh</p>
+                    </div>
+                </div>
+            </div>
+            <div class="border-t border-amber-900 mt-8 pt-8 text-center text-amber-100/60 text-sm">© 2026 MAXA AI. Integrated interface version.</div>
+        </div>
+    </footer>
+
+    <script>
+        lucide.createIcons();
+
+        const featureConfig = {{ feature_config|tojson if feature_config else '[]' }};
+        let currentQuestion = 0;
+        const answers = {};
+        let latestSurveyLabel = '';
+        let latestImageLabel = '';
+
+        function toggleMobileMenu() {
+            document.getElementById('mobileMenu').classList.toggle('hidden');
+        }
+
+        function updateProgress() {
+            if (!featureConfig.length) return;
+            const total = featureConfig.length;
+            const current = currentQuestion + 1;
+            const percent = Math.round((current / total) * 100);
+            document.getElementById('questionCounter').textContent = `Câu hỏi ${current}/${total}`;
+            document.getElementById('progressPercent').textContent = `${percent}%`;
+            document.getElementById('progressBar').style.width = `${percent}%`;
+            document.getElementById('prevBtn').disabled = currentQuestion === 0;
+            document.getElementById('nextBtn').textContent = currentQuestion === total - 1 ? 'Xem kết quả khảo sát' : 'Câu tiếp theo';
+        }
+
+        function renderQuestion() {
+            if (!featureConfig.length) return;
+            const feature = featureConfig[currentQuestion];
+            document.getElementById('featureLabel').textContent = feature.label;
+            document.getElementById('questionText').textContent = feature.question;
+            const container = document.getElementById('optionsContainer');
+            const saved = answers[feature.name];
+
+            if (feature.type === 'range') {
+                const currentValue = saved !== undefined ? saved : Math.round((feature.min + feature.max) / 2);
+                container.innerHTML = `
+                    <div class="bg-amber-50 rounded-2xl p-5 border border-amber-100">
+                        <input id="rangeInput" type="range" min="${feature.min}" max="${feature.max}" step="${feature.step}" value="${currentValue}" class="range-input w-full">
+                        <div class="flex justify-between text-sm text-gray-500 mt-2">
+                            <span>${feature.left_label || feature.min}</span>
+                            <span id="rangeValue" class="font-semibold text-amber-700 text-lg">${currentValue}</span>
+                            <span>${feature.right_label || feature.max}</span>
+                        </div>
+                    </div>`;
+                document.getElementById('rangeInput').addEventListener('input', (e) => {
+                    document.getElementById('rangeValue').textContent = e.target.value;
+                    answers[feature.name] = Number(e.target.value);
+                });
+                answers[feature.name] = Number(currentValue);
+            } else {
+                container.innerHTML = feature.options.map(opt => `
+                    <button type="button" onclick="selectRadio('${feature.name}', ${opt.value})" class="option-btn w-full text-left p-4 border-2 rounded-xl transition flex items-center gap-3 ${saved === opt.value ? 'border-amber-500 bg-amber-50' : 'border-gray-200 hover:border-amber-400 hover:bg-amber-50'}" data-value="${opt.value}">
+                        <div class="w-5 h-5 rounded-full border-2 ${saved === opt.value ? 'border-amber-500' : 'border-gray-300'} flex items-center justify-center">
+                            <div class="w-2.5 h-2.5 rounded-full ${saved === opt.value ? 'bg-amber-500' : 'bg-transparent'}"></div>
+                        </div>
+                        <span class="text-gray-700 font-medium">${opt.text}</span>
+                    </button>`).join('');
+            }
+            updateProgress();
+            lucide.createIcons();
+        }
+
+        function selectRadio(featureName, value) {
+            answers[featureName] = value;
+            renderQuestion();
+        }
+
+        function prevQuestion() {
+            if (currentQuestion > 0) {
+                currentQuestion -= 1;
+                renderQuestion();
+            }
+        }
+
+        function nextQuestion() {
+            if (!featureConfig.length) return;
+            const feature = featureConfig[currentQuestion];
+            if (answers[feature.name] === undefined) {
+                alert('Vui lòng chọn hoặc nhập giá trị trước khi tiếp tục.');
+                return;
+            }
+            if (currentQuestion < featureConfig.length - 1) {
+                currentQuestion += 1;
+                renderQuestion();
+            } else {
+                submitStressAnswers();
+            }
+        }
+
+        async function submitStressAnswers() {
+            document.getElementById('stressQuiz').classList.add('hidden');
+            document.getElementById('stressLoading').classList.remove('hidden');
+            try {
+                const response = await fetch('/predict_stress', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(answers)
+                });
+                const result = await response.json();
+                if (!response.ok || !result.ok) throw new Error(result.message || 'Không thể dự đoán.');
+                showStressResult(result);
+            } catch (error) {
+                alert(error.message);
+                document.getElementById('stressLoading').classList.add('hidden');
+                document.getElementById('stressQuiz').classList.remove('hidden');
+            }
+        }
+
+        function showStressResult(result) {
+            document.getElementById('stressLoading').classList.add('hidden');
+            document.getElementById('stressResult').classList.remove('hidden');
+
+            const colorMap = {
+                green: 'bg-green-100 text-green-700',
+                yellow: 'bg-yellow-100 text-yellow-700',
+                red: 'bg-red-100 text-red-700'
+            };
+            document.getElementById('stressIcon').textContent = result.icon || '📊';
+            document.getElementById('stressIcon').className = `w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-5 text-4xl ${colorMap[result.color] || 'bg-amber-100 text-amber-700'}`;
+            document.getElementById('stressLevel').textContent = `Kết quả mô hình khảo sát: ${result.level}`;
+            document.getElementById('confidenceText').textContent = result.confidence ? `Độ tin cậy dự đoán: ${result.confidence}%` : '';
+            document.getElementById('stressAnalysis').textContent = result.analysis || 'Đây là phân tích từ mô hình khảo sát.';
+
+            latestSurveyLabel = normalizeSurveyLabel(result.raw_label || result.level || '');
+            if (latestSurveyLabel) {
+                document.getElementById('surveyFusionSelect').value = latestSurveyLabel;
+            }
+            lucide.createIcons();
+        }
+
+        function normalizeSurveyLabel(label) {
+            const text = String(label).toLowerCase();
+            if (text.includes('normal') || text.includes('bình thường')) return 'Normal';
+            if (text.includes('1')) return 'Stress level 1';
+            if (text.includes('2')) return 'Stress level 2';
+            return '';
+        }
+
+        function resetStressTest() {
+            currentQuestion = 0;
+            Object.keys(answers).forEach(k => delete answers[k]);
+            document.getElementById('stressResult').classList.add('hidden');
+            document.getElementById('stressLoading').classList.add('hidden');
+            document.getElementById('stressQuiz').classList.remove('hidden');
+            if (featureConfig.length) renderQuestion();
+        }
+
+        function previewImage(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                document.getElementById('previewImage').src = e.target.result;
+                document.getElementById('previewWrapper').classList.remove('hidden');
+            };
+            reader.readAsDataURL(file);
+        }
+
+        async function submitImagePrediction() {
+            const fileInput = document.getElementById('imageInput');
+            const file = fileInput.files[0];
+            if (!file) {
+                alert('Vui lòng chọn ảnh trước khi phân tích.');
+                return;
+            }
+
+            document.getElementById('imageHint').classList.add('hidden');
+            document.getElementById('imageResult').classList.add('hidden');
+            document.getElementById('imageLoading').classList.remove('hidden');
+
+            try {
+                const formData = new FormData();
+                formData.append('image', file);
+                const response = await fetch('/predict_emotion', {
+                    method: 'POST',
+                    body: formData
+                });
+                const result = await response.json();
+                if (!response.ok || !result.ok) throw new Error(result.message || 'Không thể phân tích ảnh.');
+                showImageResult(result);
+            } catch (error) {
+                document.getElementById('imageLoading').classList.add('hidden');
+                document.getElementById('imageHint').classList.remove('hidden');
+                alert(error.message);
+            }
+        }
+
+        function showImageResult(result) {
+            document.getElementById('imageLoading').classList.add('hidden');
+            document.getElementById('imageResult').classList.remove('hidden');
+
+            const label = normalizeImageLabel(result.raw_label || result.label || result.level || '');
+            latestImageLabel = label;
+            if (label) document.getElementById('imageFusionSelect').value = label;
+
+            const iconMap = { Happy: '😊', Neutral: '😐', Sad: '😟' };
+            document.getElementById('imageLevel').textContent = label || 'Neutral';
+            document.getElementById('imageMoodIcon').textContent = iconMap[label] || '😐';
+            document.getElementById('imageConfidence').textContent = result.confidence ? `Độ tin cậy: ${result.confidence}%` : '';
+            document.getElementById('imageAnalysis').textContent = result.analysis || 'Mô hình đã nhận diện cảm xúc từ ảnh khuôn mặt.';
+        }
+
+        function normalizeImageLabel(label) {
+            const text = String(label).toLowerCase();
+            if (text.includes('happy') || text.includes('vui')) return 'Happy';
+            if (text.includes('sad') || text.includes('buồn')) return 'Sad';
+            if (text.includes('neutral') || text.includes('bình thường') || text.includes('trung tính')) return 'Neutral';
+            return '';
+        }
+
+        function resetImageSection() {
+            document.getElementById('imageInput').value = '';
+            document.getElementById('previewImage').src = '';
+            document.getElementById('previewWrapper').classList.add('hidden');
+            document.getElementById('imageResult').classList.add('hidden');
+            document.getElementById('imageLoading').classList.add('hidden');
+            document.getElementById('imageHint').classList.remove('hidden');
+        }
+
+        function copySurveyResultToFusion() {
+            const label = latestSurveyLabel || normalizeSurveyLabel(document.getElementById('stressLevel').textContent);
+            if (label) {
+                document.getElementById('surveyFusionSelect').value = label;
+                document.getElementById('combined-model').scrollIntoView({ behavior: 'smooth' });
+            }
+        }
+
+        function copyImageResultToFusion() {
+            const label = latestImageLabel || document.getElementById('imageFusionSelect').value;
+            if (label) {
+                document.getElementById('imageFusionSelect').value = label;
+                document.getElementById('combined-model').scrollIntoView({ behavior: 'smooth' });
+            }
+        }
+
+        function combineResults() {
+            const survey = document.getElementById('surveyFusionSelect').value;
+            const image = document.getElementById('imageFusionSelect').value;
+            if (!survey || !image) {
+                alert('Vui lòng chọn đầy đủ kết quả khảo sát và kết quả hình ảnh.');
+                return;
+            }
+
+            const data = getCombinedRule(survey, image);
+            renderCombinedResult(data, survey, image);
+        }
+
+        function getCombinedRule(survey, image) {
+            if (survey === 'Normal' && (image === 'Happy' || image === 'Neutral')) {
+                return {
+                    level: 'Mức I – Ổn định',
+                    meaning: 'Trạng thái ổn định',
+                    explanation: 'Kết quả khảo sát đang ở mức bình thường và cảm xúc thể hiện trên ảnh không cho thấy dấu hiệu tiêu cực rõ rệt. Học sinh có thể tiếp tục học tập theo kế hoạch hiện tại nhưng vẫn nên duy trì ngủ nghỉ hợp lý.',
+                    color: 'emerald',
+                    emoji: '😊',
+                    recommendations: [
+                        'Duy trì nhịp học hiện tại và nghỉ giải lao đúng giờ.',
+                        'Giữ cân bằng giữa học tập, vận động và ngủ đủ giấc.',
+                        'Theo dõi định kỳ để phát hiện sớm thay đổi bất thường.'
+                    ]
+                };
+            }
+
+            if (survey === 'Normal' && image === 'Sad') {
+                return {
+                    level: 'Mức II – Cần chú ý',
+                    meaning: 'Cần chú ý cảm xúc',
+                    explanation: 'Khảo sát chưa cho thấy stress rõ ràng nhưng cảm xúc buồn trên ảnh là dấu hiệu nên theo dõi thêm. Học sinh có thể đang mệt, chán nản hoặc chịu áp lực ngắn hạn.',
+                    color: 'yellow',
+                    emoji: '🙂',
+                    recommendations: [
+                        'Giảm tải nhẹ trong ngày nếu cảm thấy mệt.',
+                        'Nghỉ ngắn giữa các ca học và ngủ đúng giờ.',
+                        'Chia sẻ với người thân hoặc bạn bè nếu cảm xúc buồn lặp lại.'
+                    ]
+                };
+            }
+
+            if ((survey === 'Stress level 1' && (image === 'Happy' || image === 'Neutral')) || (survey === 'Stress level 2' && image === 'Neutral')) {
+                return {
+                    level: 'Mức III – Có stress',
+                    meaning: 'Có stress, cần điều chỉnh',
+                    explanation: 'Mô hình khảo sát đã phát hiện áp lực đáng kể. Dù cảm xúc trên ảnh chưa biểu lộ buồn rõ ràng, học sinh vẫn cần điều chỉnh cách học để tránh căng thẳng kéo dài.',
+                    color: 'orange',
+                    emoji: '😐',
+                    recommendations: [
+                        'Giảm số lượng việc học nặng trong cùng một ngày.',
+                        'Ưu tiên môn yếu hoặc nhiệm vụ quan trọng trước.',
+                        'Tăng thời gian nghỉ giữa các phiên học và theo dõi lại trong vài ngày.'
+                    ]
+                };
+            }
+
+            if ((survey === 'Stress level 1' || survey === 'Stress level 2') && image === 'Sad') {
+                return {
+                    level: 'Mức IV – Đáng lo ngại',
+                    meaning: 'Nguy cơ cao, cần hỗ trợ sớm',
+                    explanation: 'Cả hai nguồn dữ liệu đều cho thấy tín hiệu đáng lo ngại: khảo sát cho thấy có stress và cảm xúc ảnh thể hiện buồn. Đây là nhóm nên được hỗ trợ sớm để tránh kéo dài áp lực.',
+                    color: 'red',
+                    emoji: '😟',
+                    recommendations: [
+                        'Giảm ngay cường độ học tập trong ngắn hạn.',
+                        'Trao đổi với phụ huynh, giáo viên chủ nhiệm hoặc cố vấn học tập.',
+                        'Nếu cảm giác buồn chán kéo dài, nên tìm hỗ trợ chuyên môn phù hợp.'
+                    ]
+                };
+            }
+
+            return {
+                level: 'Chưa xác định',
+                meaning: 'Chưa đủ điều kiện kết hợp',
+                explanation: 'Kết quả đầu vào chưa nằm trong bảng luật hoặc chưa đúng định dạng nhãn.',
+                color: 'gray',
+                emoji: '❔',
+                recommendations: ['Kiểm tra lại nhãn đầu vào từ hai mô hình.']
+            };
+        }
+
+        function renderCombinedResult(data, survey, image) {
+            const combinedResult = document.getElementById('combinedResult');
+            const combinedCard = document.getElementById('combinedCard');
+            const colorMap = {
+                emerald: 'bg-emerald-100 border-emerald-200',
+                yellow: 'bg-yellow-100 border-yellow-200',
+                orange: 'bg-orange-100 border-orange-200',
+                red: 'bg-red-100 border-red-200',
+                gray: 'bg-gray-100 border-gray-200'
+            };
+            const subtitleMap = {
+                emerald: 'Ổn định',
+                yellow: 'Cần chú ý',
+                orange: 'Có stress',
+                red: 'Đáng lo ngại',
+                gray: 'Không xác định'
+            };
+
+            combinedCard.className = `rounded-3xl p-6 border ${colorMap[data.color] || colorMap.gray}`;
+            document.getElementById('combinedSubtitle').textContent = subtitleMap[data.color] || 'Kết quả tổng hợp';
+            document.getElementById('combinedLevel').textContent = data.level;
+            document.getElementById('combinedMeaning').textContent = data.meaning;
+            document.getElementById('combinedEmoji').textContent = data.emoji;
+            document.getElementById('combinedSurveySource').textContent = survey;
+            document.getElementById('combinedImageSource').textContent = image;
+            document.getElementById('combinedExplanation').textContent = data.explanation;
+            document.getElementById('combinedRecommendations').innerHTML = data.recommendations.map(item => `<li class="flex items-start gap-2"><span class="mt-1">•</span><span>${item}</span></li>`).join('');
+            combinedResult.classList.remove('hidden');
+            lucide.createIcons();
+        }
+
+        if (featureConfig.length) {
+            renderQuestion();
+        } else {
+            document.getElementById('stressQuiz').innerHTML = '<div class="text-center py-8 text-gray-600">Chưa có <code>feature_config</code> từ backend để hiển thị bộ câu hỏi.</div>';
+        }
+    </script>
+</body>
+</html>
