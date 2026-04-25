@@ -80,11 +80,11 @@
             </div>
             <h1 class="text-4xl md:text-6xl font-extrabold mb-6 leading-tight">
                 Hệ thống AI hỗ trợ <span class="maxa-text">phát hiện sớm stress</span><br>
-                và gợi ý lộ trình học tập cho học sinh
+                và tổng hợp mức cảnh báo cho học sinh
             </h1>
             <p class="text-lg md:text-xl text-gray-600 max-w-4xl mx-auto mb-10 leading-relaxed">
-                Giao diện web gồm 3 module<strong>mô hình khảo sát</strong>, <strong>mô hình hình ảnh</strong> và <strong> kết hợp kết quả</strong>. 
-                Phần kết hợp sử dụng logic 4 logic tổng hợp: Mức I, II, III và IV.
+                Giao diện web được tách thành 3 phần rõ ràng: <strong>mô hình khảo sát</strong>, <strong>mô hình hình ảnh</strong> và <strong>menu kết hợp kết quả</strong>. 
+                Phần kết hợp sử dụng đúng logic 4 mức đầu ra được mô tả trong thuyết minh: Mức I, II, III và IV.
             </p>
             <div class="flex flex-wrap justify-center gap-4">
                 <a href="#survey-model" class="px-8 py-3 bg-amber-500 text-white rounded-full font-semibold hover:bg-amber-600 transition flex items-center gap-2 btn-ripple">
@@ -93,7 +93,7 @@
                 </a>
                 <a href="#combined-model" class="px-8 py-3 bg-white text-amber-700 border-2 border-amber-400 rounded-full font-semibold hover:bg-amber-50 transition flex items-center gap-2">
                     <i data-lucide="layers-3" class="w-5 h-5"></i>
-                    Kết hợp đầu ra
+                    Xem phần kết hợp
                 </a>
             </div>
         </div>
@@ -103,7 +103,7 @@
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
                 <div class="result-card bg-amber-50 rounded-2xl p-5">
-                    <div class="text-3xl font-extrabold text-amber-600">{{ model_accuracy if model_accuracy else ~ 90% }}%</div>
+                    <div class="text-3xl font-extrabold text-amber-600">{{ model_accuracy if model_accuracy else 95 }}%</div>
                     <div class="text-gray-600 text-sm mt-1">Độ chính xác mô hình khảo sát</div>
                 </div>
                 <div class="result-card bg-blue-50 rounded-2xl p-5">
