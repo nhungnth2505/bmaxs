@@ -295,7 +295,7 @@ def combine_rule(survey_label: str, image_label: str) -> dict[str, Any]:
 # -----------------------------------------------------------------------------
 @app.get('/')
 def home():
-    return render_template('index.html', feature_config=FEATURE_CONFIG, model_accuracy=95)
+    return render_template('index.html', feature_config=FEATURE_CONFIG, model_accuracy=90)
 
 
 @app.post('/predict_stress')
