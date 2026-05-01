@@ -23,10 +23,12 @@ pip install -r requirements.txt
 python app.py
 ```
 - on Window:
+```bash
 python -m venv venv
 venv\Scripts\activate
 pip install -r requirements.txt
 python app.py
+```
 ## API
 - `GET /health`
 - `POST /predict_stress`
